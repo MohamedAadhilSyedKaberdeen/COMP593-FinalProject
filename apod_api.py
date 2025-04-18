@@ -1,65 +1,63 @@
-'''
-COMP 593 - Final Project
-Authors (Group Assignment):
-Sivaneshwar Tamilmaran Latha
-Mohamed Aadhil Syed Kaberdeen
-
-Library for interacting with NASA's Astronomy Picture of the Day API.
-'''
+"""
+Library for interacting with NASA's Astronomy Picture of the Day (APOD) API.
+"""
 import requests
 
-APOD_API_URL = 'https://api.nasa.gov/planetary/apod'
-API_KEY = '9SCEQj2qU22MxgcH4FP6ERyucjXJnfmYMtI40va8'
+APOD_API_URL = "https://api.nasa.gov/planetary/apod"
+API_KEY = "iaVRDrtMurc9vEDQmUAnrb45FJW8VoXTB7rPm2YU"  # Use your API key here
 
 def main():
-    # TODO: Add code to test the functions in this module
-    apod_date = get_apod_info("1995-06-16")
-    print(apod_date)
+    """Run a simple test of the APOD API functions."""
+    # Example: fetch APOD info for the first available APOD date
+    info = get_apod_info("1995-06-16")
+    print("APOD title for 1995-06-16:", info.get("title") if info else "Failed to fetch")
+    # Example: get image URL from that info
+    if info:
+        url = get_apod_image_url(info)
+        print("Image URL for 1995-06-16:", url)
 
 def get_apod_info(apod_date):
-    """Gets information from the NASA API for the Astronomy 
-    Picture of the Day (APOD) from a specified date.
-
+    """Gets the APOD information for a specified date from NASA's API.
+    
     Args:
-        apod_date (date): APOD date (Can also be a string formatted as YYYY-MM-DD)
-
+        apod_date (date or str): APOD date (YYYY-MM-DD format string or date object)
+    
     Returns:
-        dict: Dictionary of APOD info, if successful. None if unsuccessful
+        dict: Dictionary of APOD data (title, explanation, URL, etc.) if successful, or None if failed.
     """
-    # TODO: Complete the function body
-    # Hint: The APOD API uses query string parameters: https://requests.readthedocs.io/en/latest/user/quickstart/#passing-parameters-in-urls
-    # Hint: Set the 'thumbs' parameter to True so the info returned for video APODs will include URL of the video thumbnail image 
-    get_params = {'api_key': API_KEY,
-                  'date': apod_date,
-                  'thumbs': True
+    # Prepare request parameters, including API key and date
+    params = {
+        "api_key": API_KEY,
+        "date": str(apod_date),
+        "thumbs": True  # Request thumbnail URL if the APOD is a video
     }
+    # Send GET request to the APOD API
+    response = requests.get(APOD_API_URL, params=params)
+    if response.status_code == requests.codes.ok:
+        return response.json()  # Successful response returns a dict of APOD info
+    else:
+        return None  # API request failed (e.g., invalid date or network issue)
 
-    resp_msg = requests.get(APOD_API_URL, params=get_params)
+def get_apod_image_url(apod_info):
+    """Determines the URL of the APOD image from the APOD info dictionary.
     
-    if resp_msg.status_code == requests.codes.ok:
-        return resp_msg.json() 
-    return None      
-
-def get_apod_image_url(apod_info_dict):
-    """Gets the URL of the APOD image from the dictionary of APOD information.
-
-    If the APOD is an image, gets the URL of the high definition image.
-    If the APOD is a video, gets the URL of the video thumbnail.
-
+    If the APOD media type is an image, returns the HD image URL.
+    If it's a video, returns the thumbnail image URL (so we have an image to display).
+    
     Args:
-        apod_info_dict (dict): Dictionary of APOD info from API
-
-    Returns:
-        str: APOD image URL
-    """
-    # TODO: Complete the function body
-    # Hint: The APOD info dictionary includes a key named 'media_type' that indicates whether the APOD is an image or video
+        apod_info (dict): APOD information dictionary (from get_apod_info).
     
-    if apod_info_dict['media_type'] == 'image':
-        return apod_info_dict('hdurl')
-    elif apod_info_dict['media_type'] == 'video':
-        return apod_info_dict['thumbnail_url']
-    return None
+    Returns:
+        str: URL of an image (HD image or video thumbnail) corresponding to the APOD.
+    """
+    if apod_info is None:
+        return None
+    if apod_info.get("media_type") == "image":
+        return apod_info.get("hdurl")
+    elif apod_info.get("media_type") == "video":
+        return apod_info.get("thumbnail_url")
+    else:
+        return None
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
